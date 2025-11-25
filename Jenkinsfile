@@ -4,20 +4,23 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'main', url: 'https://github.com/hassenjridi12/Mangement-student.git
-'
+                git(
+                    url: 'https://github.com/hassenjridi12/Mangement-student.git',
+                    branch: 'main',
+                    credentialsId: 'github-credentials'
+                )
             }
         }
 
         stage('Build') {
             steps {
-                sh 'mvn clean install'
+                bat 'mvn clean install'
             }
         }
 
         stage('Test') {
             steps {
-                sh 'mvn test'
+                bat 'mvn test'
             }
         }
     }
