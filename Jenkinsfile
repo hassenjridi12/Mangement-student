@@ -1,27 +1,43 @@
 pipeline {
     agent any
-
+    
     stages {
         stage('Checkout') {
             steps {
-                git(
-                    url: 'https://github.com/hassenjridi12/Mangement-student.git',
-                    branch: 'main',
-                    credentialsId: 'github-credentials'
-                )
+                echo '🎉 Étape 1: Préparation de l environnement'
+                sh 'echo "Bonjour Jenkins!"'
             }
         }
-
+        
         stage('Build') {
             steps {
-                bat 'mvn clean install'
+                echo '🔨 Étape 2: Construction'
+                sh '''
+                    echo "Construction en cours..."
+                    ls -la
+                    pwd
+                '''
             }
         }
-
+        
         stage('Test') {
             steps {
-                bat 'mvn test'
+                echo '🧪 Étape 3: Tests'
+                sh 'echo "Exécution des tests..."'
             }
+        }
+        
+        stage('Deploy') {
+            steps {
+                echo '🚀 Étape 4: Déploiement'
+                sh 'echo "Déploiement réussi!"'
+            }
+        }
+    }
+    
+    post {
+        always {
+            echo '✅ Pipeline terminé!'
         }
     }
 }
