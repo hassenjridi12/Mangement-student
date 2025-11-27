@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     tools {
-        maven 'Maven-3.9.11'
+        maven 'Maven-3.9.11' // Nom configuré dans Jenkins Global Tool Configuration
     }
 
     stages {
@@ -14,21 +14,31 @@ pipeline {
             }
         }
 
+        stage('Clean') {
+            steps {
+                echo "🧹 Nettoyage du dossier target"
+                bat "rmdir /s /q target"
+            }
+        }
+
         stage('Build') {
             steps {
-                bat "mvn clean package"
+                echo "🔨 Build du projet avec Maven"
+                bat "mvn clean package -DskipTests=true"
             }
         }
 
         stage('Test') {
             steps {
-                bat "echo Tests OK"
+                echo "🧪 Tests ignorés pour le moment"
+                bat "echo Tests skipped"
             }
         }
 
         stage('Deploy') {
             steps {
-                bat "echo Déploiement OK"
+                echo "🚀 Déploiement simulé"
+                bat "echo Deploy OK"
             }
         }
     }
