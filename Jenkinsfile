@@ -1,43 +1,36 @@
 pipeline {
     agent any
-    
+
     stages {
         stage('Checkout') {
             steps {
-                echo '🎉 Étape 1: Préparation de l environnement'
-                sh 'echo "Bonjour Jenkins!"'
+                echo "🎉 Étape 1: Préparation de l'environnement"
+                bat 'echo Checkout OK'
             }
         }
-        
+
         stage('Build') {
             steps {
-                echo '🔨 Étape 2: Construction'
-                sh '''
-                    echo "Construction en cours..."
-                    ls -la
-                    pwd
-                '''
+                bat 'mvn clean package'
             }
         }
-        
+
         stage('Test') {
             steps {
-                echo '🧪 Étape 3: Tests'
-                sh 'echo "Exécution des tests..."'
+                bat 'mvn test'
             }
         }
-        
+
         stage('Deploy') {
             steps {
-                echo '🚀 Étape 4: Déploiement'
-                sh 'echo "Déploiement réussi!"'
+                bat 'echo Deploiement terminé'
             }
         }
     }
-    
+
     post {
         always {
-            echo '✅ Pipeline terminé!'
+            echo "✔️ Pipeline terminé!"
         }
     }
 }
