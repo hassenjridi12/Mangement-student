@@ -14,7 +14,7 @@ pipeline {
         stage('1️⃣ Clone Repository') {
             steps {
                 echo '📥 Clonage du repository Git...'
-                git branch: 'main', url: 'https://github.com/mohamed15032003/student-management.git'
+                git branch: 'main', url: 'https://github.com/hassenjridi12/Mangement-student.git'
                 echo '✅ Clonage terminé'
             }
         }
