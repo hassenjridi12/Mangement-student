@@ -9,11 +9,13 @@ pipeline {
 
     // Déclaration des outils configurés dans Jenkins
     tools {
-        // CORRECTION: Utilisation du nom d'installation suggéré par Jenkins dans l'erreur: 'Maven-3.9.11'
+        // CORRECTION MAJ: Le nom 'Maven-3.9.11' est conservé.
         maven 'Maven-3.9.11' 
-        // NOTE: Le nom 'JDK17' a échoué. Utilisez le nom exact de votre JDK 17 configuré dans Jenkins,
-        // par exemple 'java-17' ou 'jdk17-latest'. Je laisse 'JDK17' pour l'instant, mais vérifiez ce nom.
-        jdk 'JDK17'
+        
+        // CORRECTION: Cette ligne a été commentée car Jenkins ne trouve pas d'installation 'JDK17'.
+        // Si la compilation échoue, veuillez remplacer 'JDK17' par le nom exact 
+        // de votre installation JDK 17 configurée dans Jenkins (ex: 'Java_17_Home').
+        // jdk 'JDK17' 
     }
 
     environment {
