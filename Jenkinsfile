@@ -12,10 +12,9 @@ pipeline {
         // Le nom 'Maven-3.9.11' est conservé.
         maven 'Maven-3.9.11' 
         
-        // RE-INTÉGRATION DU JDK 17: 
-        // ATTENTION: Vous DEVEZ avoir une installation JDK nommée EXACTEMENT 'JDK17' 
-        // dans 'Gérer Jenkins > Outils globaux', sinon la pipeline échouera à nouveau.
-        jdk 'JDK17' 
+        // CORRECTION CRITIQUE: Remplacement de 'JDK17' par 'JAVA_HOME', le nom suggéré par Jenkins
+        // pour votre installation JDK 17.
+        jdk 'JAVA_HOME' 
     }
 
     environment {
