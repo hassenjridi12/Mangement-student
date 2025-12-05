@@ -2,50 +2,78 @@ pipeline {
     agent any
 
     tools {
-        maven 'Maven-3.9.11' // Nom configuré dans Jenkins Global Tool Configuration
+        maven 'MAVEN_3'
+        jdk 'JDK17'
+    }
+
+    environment {
+        SONAR_TOKEN = credentials('SONARQUBE_TOKEN')  // ✅ استعمال credential
     }
 
     stages {
-
-        stage('Checkout') {
+        stage('1️⃣ Clone Repository') {
             steps {
-                echo "🎉 Étape 1: Préparation de l'environnement"
-                bat "echo Checkout OK"
+                echo '📥 Clonage du repository Git...'
+                git branch: 'main', url: 'https://github.com/mohamed15032003/student-management.git'
+                echo '✅ Clonage terminé'
             }
         }
 
-        stage('Clean') {
+        stage('2️⃣ Build Project') {
             steps {
-                echo "🧹 Nettoyage du dossier target"
-                bat "rmdir /s /q target"
+                echo '🔨 Compilation du projet avec Maven...'
+                sh 'mvn clean compile -DskipTests'
+                echo '✅ Build terminé'
             }
         }
 
-        stage('Build') {
+        stage('3️⃣ Run Tests') {
             steps {
-                echo "🔨 Build du projet avec Maven"
-                bat "mvn clean package -DskipTests=true"
+                echo '🧪 Exécution des tests...'
+                sh 'mvn test -DskipTests'
+                echo '✅ Tests terminés'
             }
         }
 
-        stage('Test') {
+        stage('4️⃣ Package JAR') {
             steps {
-                echo "🧪 Tests ignorés pour le moment"
-                bat "echo Tests skipped"
+                echo '📦 Packaging du projet en JAR...'
+                sh 'mvn package -DskipTests'
+                echo '✅ Package JAR terminé'
             }
         }
 
-        stage('Deploy') {
+        stage('5️⃣ SonarQube Analysis') {
             steps {
-                echo "🚀 Déploiement simulé"
-                bat "echo Deploy OK"
+                echo '🔍 Analyse de qualité du code avec SonarQube...'
+                withSonarQubeEnv('sonarqube') {
+                    sh """
+                    mvn sonar:sonar \
+                        -Dsonar.projectKey=student-management \
+                        -Dsonar.host.url=http://localhost:9000 \
+                        -Dsonar.login=${SONAR_TOKEN} \
+                        -DskipTests
+                    """
+                }
+                echo '✅ Analyse SonarQube terminée'
+            }
+        }
+
+        stage('6️⃣ Archive Artifact') {
+            steps {
+                echo '📁 Archivage du fichier JAR...'
+                archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
+                echo '✅ Archivage terminé'
             }
         }
     }
 
     post {
-        always {
-            echo "✔️ Pipeline terminé!"
+        failure {
+            echo '❌ Le pipeline a échoué'
+        }
+        success {
+            echo '🎉 Pipeline terminé avec succès'
         }
     }
 }
