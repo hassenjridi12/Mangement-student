@@ -2,7 +2,14 @@ pipeline {
     agent any
 
     tools {
-        maven 'Maven-3.9.11' // Nom configuré dans Jenkins Global Tool Configuration
+        maven 'Maven-3.9.11'
+    }
+
+    environment {
+        SONAR_URL = "http://localhost:9000"
+        SONAR_LOGIN = "admin"
+        SONAR_PASSWORD = "sonar"
+        SONAR_PROJECT_KEY = "MonProjetJava"
     }
 
     stages {
@@ -17,7 +24,7 @@ pipeline {
         stage('Clean') {
             steps {
                 echo "🧹 Nettoyage du dossier target"
-                bat "rmdir /s /q target"
+                bat "if exist target rmdir /s /q target"
             }
         }
 
@@ -35,6 +42,19 @@ pipeline {
             }
         }
 
+        stage('SonarQube Analysis') {
+            steps {
+                echo "🔍 Analyse SonarQube du code source"
+                bat """
+                    mvn sonar:sonar ^
+                    -Dsonar.projectKey=%SONAR_PROJECT_KEY% ^
+                    -Dsonar.host.url=%SONAR_URL% ^
+                    -Dsonar.login=%SONAR_LOGIN% ^
+                    -Dsonar.password=%SONAR_PASSWORD%
+                """
+            }
+        }
+
         stage('Deploy') {
             steps {
                 echo "🚀 Déploiement simulé"
@@ -45,7 +65,7 @@ pipeline {
 
     post {
         always {
-            echo "✔️ Pipeline terminé!"
+            echo "✔️ Pipeline terminé !"
         }
     }
 }
