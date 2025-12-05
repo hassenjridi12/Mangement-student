@@ -1,51 +1,46 @@
 pipeline {
     agent any
 
-    tools {
-        maven 'Maven-3.9.11' // Nom configuré dans Jenkins Global Tool Configuration
-    }
-
     stages {
 
-        stage('Checkout') {
+        stage('📥 Git Clone') {
             steps {
-                echo "🎉 Étape 1: Préparation de l'environnement"
-                bat "echo Checkout OK"
+                git branch: 'main',
+                    url: 'https://github.com/chahinesaadellaoui/ProjetDevops.git'
             }
         }
 
-        stage('Clean') {
+        stage('🏗️ Build') {
             steps {
-                echo "🧹 Nettoyage du dossier target"
-                bat "rmdir /s /q target"
+                echo "Compilation du projet..."
+                sh 'mvn clean compile -DskipTests'
             }
         }
 
-        stage('Build') {
+        stage('📦 Create JAR') {
             steps {
-                echo "🔨 Build du projet avec Maven"
-                bat "mvn clean package -DskipTests=true"
+                echo "Packaging du projet..."
+                sh 'mvn package -DskipTests' 
+                sh 'ls -la target/*.jar'
             }
         }
+        stage('SonarQube Analysis') {
+    steps {
+        withSonarQubeEnv(installationName: 'devops') {
+            sh 'mvn clean verify sonar:sonar -DskipTests'
+        }
+    }
+}
 
-        stage('Test') {
-            steps {
-                echo "🧪 Tests ignorés pour le moment"
-                bat "echo Tests skipped"
-            }
-        }
-
-        stage('Deploy') {
-            steps {
-                echo "🚀 Déploiement simulé"
-                bat "echo Deploy OK"
-            }
-        }
     }
 
     post {
-        always {
-            echo "✔️ Pipeline terminé!"
+        success {
+            echo '🎉 Pipeline exécuté avec succès !'
+            archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
+        }
+        failure {
+            echo '❌ Échec du pipeline.'
         }
     }
 }
