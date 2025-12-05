@@ -3,7 +3,6 @@ pipeline {
 
     tools {
         maven 'Maven-3.9.11'
-       
     }
 
     environment {
@@ -22,7 +21,7 @@ pipeline {
         stage('2️⃣ Build Project') {
             steps {
                 echo '🔨 Compilation du projet avec Maven...'
-                sh 'mvn clean compile -DskipTests'
+                bat 'mvn clean compile -DskipTests'
                 echo '✅ Build terminé'
             }
         }
@@ -30,7 +29,7 @@ pipeline {
         stage('3️⃣ Run Tests') {
             steps {
                 echo '🧪 Exécution des tests...'
-                sh 'mvn test -DskipTests'
+                bat 'mvn test'
                 echo '✅ Tests terminés'
             }
         }
@@ -38,7 +37,7 @@ pipeline {
         stage('4️⃣ Package JAR') {
             steps {
                 echo '📦 Packaging du projet en JAR...'
-                sh 'mvn package -DskipTests'
+                bat 'mvn package -DskipTests'
                 echo '✅ Package JAR terminé'
             }
         }
@@ -47,11 +46,11 @@ pipeline {
             steps {
                 echo '🔍 Analyse de qualité du code avec SonarQube...'
                 withSonarQubeEnv('sonarqube') {
-                    sh """
-                    mvn sonar:sonar \
-                        -Dsonar.projectKey=student-management \
-                        -Dsonar.host.url=http://localhost:9000 \
-                        -Dsonar.login=${SONAR_TOKEN} \
+                    bat """
+                    mvn sonar:sonar ^
+                        -Dsonar.projectKey=student-management ^
+                        -Dsonar.host.url=http://localhost:9000 ^
+                        -Dsonar.login=${SONAR_TOKEN} ^
                         -DskipTests
                     """
                 }
@@ -77,3 +76,4 @@ pipeline {
         }
     }
 }
+
