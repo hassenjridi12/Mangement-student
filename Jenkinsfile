@@ -59,7 +59,13 @@ pipeline {
                         -DskipTests
                     """
                 }
-                echo '✅ Analyse SonarQube terminée'
+                echo '✅ Analyse SonarQube lancée'
+                
+                // NOUVEAU: Attente du résultat de la Quality Gate (TRÈS IMPORTANT pour l'intégration continue)
+                timeout(time: 5, unit: 'MINUTES') {
+                    waitForQualityGate abortPipeline: true
+                }
+                echo '✅ Vérification de la Quality Gate terminée'
             }
         }
 
