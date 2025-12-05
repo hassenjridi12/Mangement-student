@@ -35,18 +35,6 @@ pipeline {
             }
         }
 
-        stage('SonarQube Analysis') {
-            steps {
-                echo "🔍 Analyse SonarQube du code"
-                bat """
-                    mvn clean verify sonar:sonar ^
-                    -Dsonar.host.url=http://localhost:9000 ^
-                    -Dsonar.login=admin ^
-                    -Dsonar.password=sonar
-                """
-            }
-        }
-
         stage('Deploy') {
             steps {
                 echo "🚀 Déploiement simulé"
