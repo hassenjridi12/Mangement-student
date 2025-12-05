@@ -152,7 +152,8 @@ pipeline {
     // Le bloc 'post' est exécuté après toutes les étapes, quel que soit le résultat.
     post {
         failure {
-            echo '❌ Le pipeline a échoué. Vérifiez les logs des étapes pour identifier l''erreur.'
+            // CORRECTION DE L'APOSTROPHE (l'erreur)
+            echo "❌ Le pipeline a échoué. Vérifiez les logs des étapes pour identifier l'erreur."
         }
         success {
             echo '🎉 Pipeline terminé avec succès. Le JAR est prêt pour le Déploiement Continu.'
