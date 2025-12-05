@@ -9,13 +9,13 @@ pipeline {
 
     // Déclaration des outils configurés dans Jenkins
     tools {
-        // CORRECTION MAJ: Le nom 'Maven-3.9.11' est conservé.
+        // Le nom 'Maven-3.9.11' est conservé.
         maven 'Maven-3.9.11' 
         
-        // CORRECTION: Cette ligne a été commentée car Jenkins ne trouve pas d'installation 'JDK17'.
-        // Si la compilation échoue, veuillez remplacer 'JDK17' par le nom exact 
-        // de votre installation JDK 17 configurée dans Jenkins (ex: 'Java_17_Home').
-        // jdk 'JDK17' 
+        // RE-INTÉGRATION DU JDK 17: 
+        // ATTENTION: Vous DEVEZ avoir une installation JDK nommée EXACTEMENT 'JDK17' 
+        // dans 'Gérer Jenkins > Outils globaux', sinon la pipeline échouera à nouveau.
+        jdk 'JDK17' 
     }
 
     environment {
@@ -30,7 +30,6 @@ pipeline {
             steps {
                 echo 'Clonage du repository Git...'
                 // Utilisation de votre URL et branche
-                // J'ai corrigé l'URL pour pointer vers la racine du dépôt Git (.git)
                 git branch: 'main', url: 'https://github.com/hassenjridi12/Mangement-student.git'
             }
         }
@@ -38,10 +37,8 @@ pipeline {
         stage('2. Build, Test and Package') {
             steps {
                 echo 'Compilation, exécution des tests et packaging...'
-                // NOTE IMPORTANTE: 'mvn clean install' (ou 'verify') exécute CLEAN, COMPILE, TEST, PACKAGE.
-                // Le flag -DskipTests est RETIRÉ pour que les tests s'exécutent.
-                // Cela combine efficacement vos étapes 'Build', 'Run Tests' et 'Package JAR'.
-                sh 'mvn clean install'
+                // CORRECTION WINDOWS: Remplacement de 'sh' par 'bat'
+                bat 'mvn clean install'
                 echo 'Build, tests et package terminés.'
             }
         }
@@ -51,12 +48,14 @@ pipeline {
                 echo 'Analyse de qualité du code avec SonarQube...'
                 // Le nom 'sonarqube' doit correspondre au nom du serveur configuré dans Jenkins
                 withSonarQubeEnv('sonarqube') {
-                    sh """
-                    mvn org.sonarsource.scanner.maven:sonar-maven-plugin:sonar \
-                        -Dsonar.projectKey=student-management \
-                        -Dsonar.host.url=http://localhost:9000 \
-                        -Dsonar.login=${SONAR_TOKEN}
+                    // CORRECTION WINDOWS: Remplacement de 'sh' par 'bat' et adaptation des variables/sauts de ligne
+                    bat """
+                    mvn org.sonarsource.scanner.maven:sonar-maven-plugin:sonar ^
+                        -Dsonar.projectKey=student-management ^
+                        -Dsonar.host.url=http://localhost:9000 ^
+                        -Dsonar.login=%SONAR_TOKEN%
                     """
+                    // NOTE: Utilisation de '^' pour le saut de ligne et de '%VAR%' pour les variables d'environnement dans le shell bat.
                 }
                 echo 'Analyse SonarQube soumise au serveur.'
             }
