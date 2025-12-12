@@ -1,19 +1,19 @@
 /**
  * Pipeline Jenkins complet pour le projet 'student-management'.
- * Correction : Ajout du bloc 'dir' à l'Étape 3 pour naviguer dans le sous-dossier du projet
- * (où se trouve le pom.xml) après le checkout.
+ * Correction : Suppression des blocs 'dir' de navigation car le pom.xml est supposé être à la racine
+ * du repository cloné.
  */
 
 pipeline {
     agent any
 
     tools {
-        maven 'Maven-3.9.11'       // Maven configuré dans Jenkins
-        jdk 'JAVA_HOME'            // JDK 17 configuré dans Jenkins
+        maven 'Maven-3.9.11'
+        jdk 'JAVA_HOME'
     }
 
     environment {
-        SONAR_TOKEN = credentials('SONARQUBE_TOKEN') // Secure Token
+        SONAR_TOKEN = credentials('SONARQUBE_TOKEN')
         ARTIFACT_NAME = 'target/*.jar'
         BUILD_ID = "${BUILD_NUMBER}"
     }
@@ -42,32 +42,29 @@ pipeline {
         stage('3. Build & Test avec Base de données H2 (Test) - CORRIGÉE') {
             steps {
                 echo "🔨 Compilation + Tests avec profil 'test'…"
-                // ATTENTION : Remplacez 'student-management-code' par le nom du sous-dossier réel
-                // où se trouve votre fichier pom.xml dans le repository cloné.
-                dir('student-management-code') { // <--- CORRECTION CLÉ : Déplacement dans le bon répertoire
-                    script {
-                        try {
-                            // Tentative 1 : Build et exécution des tests
-                            bat """
-                                mvn clean install \
-                                -Dspring.profiles.active=test \
-                                -DskipTests=false \
-                                -Dmaven.test.failure.ignore=false
-                            """
-                        } catch (Exception e) {
-                            echo "⚠️ Tests échoués : ${e.getMessage()}"
-                            echo "📋 Tentative alternative avec skip des tests..."
-                            
-                            // Tentative 2 : Skip les tests pour au moins générer le JAR pour SonarQube
-                            bat """
-                                mvn clean package \
-                                -Dspring.profiles.active=test \
-                                -DskipTests=true \
-                                -Dmaven.test.skip=true
-                            """
-                        }
+                // CORRECTION CLÉ : Suppression du 'dir'
+                script {
+                    try {
+                        // Tentative 1 : Build et exécution des tests
+                        bat """
+                            mvn clean install \
+                            -Dspring.profiles.active=test \
+                            -DskipTests=false \
+                            -Dmaven.test.failure.ignore=false
+                        """
+                    } catch (Exception e) {
+                        echo "⚠️ Tests échoués : ${e.getMessage()}"
+                        echo "📋 Tentative alternative avec skip des tests..."
+                        
+                        // Tentative 2 : Skip les tests
+                        bat """
+                            mvn clean package \
+                            -Dspring.profiles.active=test \
+                            -DskipTests=true \
+                            -Dmaven.test.skip=true
+                        """
                     }
-                } // <--- FIN DU RÉPERTOIRE
+                }
             }
         }
 
@@ -75,28 +72,26 @@ pipeline {
         stage('4. SonarQube Analysis') {
             steps {
                 echo "🔍 Analyse SonarQube en cours…"
-                // Si l'étape précédente nécessitait un 'dir', il faut réutiliser ce 'dir' ici
-                dir('student-management-code') { 
-                    script {
-                        try {
-                            withSonarQubeEnv('sonarqube') {
-                                bat """
-                                    mvn org.sonarsource.scanner.maven:sonar-maven-plugin:sonar ^
-                                    -Dsonar.projectKey=student-management ^
-                                    -Dsonar.projectName="Student Management" ^
-                                    -Dsonar.host.url=http://localhost:9000 ^
-                                    -Dsonar.login=%SONAR_TOKEN% ^
-                                    -Dsonar.scm.disabled=true ^
-                                    -Dsonar.coverage.exclusions=**/test/**,**/*Test.java,**/*Tests.java ^
-                                    -Dsonar.java.binaries=target/classes ^
-                                    -Dsonar.java.test.binaries=target/test-classes
-                                """
-                            }
-                            echo "✅ Analyse SonarQube envoyée avec succès."
-                        } catch (Exception e) {
-                            echo "⚠️ Erreur SonarQube : ${e.getMessage()}"
-                            echo "⏭️ Continuation du pipeline sans SonarQube..."
+                // CORRECTION CLÉ : Suppression du 'dir'
+                script {
+                    try {
+                        withSonarQubeEnv('sonarqube') {
+                            bat """
+                                mvn org.sonarsource.scanner.maven:sonar-maven-plugin:sonar ^
+                                -Dsonar.projectKey=student-management ^
+                                -Dsonar.projectName="Student Management" ^
+                                -Dsonar.host.url=http://localhost:9000 ^
+                                -Dsonar.login=%SONAR_TOKEN% ^
+                                -Dsonar.scm.disabled=true ^
+                                -Dsonar.coverage.exclusions=**/test/**,**/*Test.java,**/*Tests.java ^
+                                -Dsonar.java.binaries=target/classes ^
+                                -Dsonar.java.test.binaries=target/test-classes
+                            """
                         }
+                        echo "✅ Analyse SonarQube envoyée avec succès."
+                    } catch (Exception e) {
+                        echo "⚠️ Erreur SonarQube : ${e.getMessage()}"
+                        echo "⏭️ Continuation du pipeline sans SonarQube..."
                     }
                 }
             }
@@ -104,7 +99,6 @@ pipeline {
 
         /* ---------------------------------------------------------- */
         stage('5. Quality Gate Check') {
-            // Pas de changement nécessaire ici
             steps {
                 script {
                     echo "⏳ Attente de l'analyse SonarQube et vérification Quality Gate…"
@@ -130,19 +124,18 @@ pipeline {
         stage('6. Archive Artifact') {
             steps {
                 echo "📦 Archivage de l'artefact JAR…"
-                dir('student-management-code') { // <--- Nécessaire pour trouver target/
-                    script {
-                        def files = findFiles(glob: 'target/*.jar')
-                        if (files.length > 0) {
-                            archiveArtifacts artifacts: ARTIFACT_NAME, 
-                                                fingerprint: true,
-                                                allowEmptyArchive: false
-                            echo "✅ Artefact archivé : ${files[0].name}"
-                        } else {
-                            echo "⚠️ Aucun fichier JAR trouvé dans target/"
-                            writeFile file: 'empty.txt', text: 'Build completed'
-                            archiveArtifacts artifacts: 'empty.txt', allowEmptyArchive: true
-                        }
+                // CORRECTION CLÉ : Suppression du 'dir'
+                script {
+                    def files = findFiles(glob: 'target/*.jar')
+                    if (files.length > 0) {
+                        archiveArtifacts artifacts: ARTIFACT_NAME, 
+                                            fingerprint: true,
+                                            allowEmptyArchive: false
+                        echo "✅ Artefact archivé : ${files[0].name}"
+                    } else {
+                        echo "⚠️ Aucun fichier JAR trouvé dans target/"
+                        writeFile file: 'empty.txt', text: 'Build completed'
+                        archiveArtifacts artifacts: 'empty.txt', allowEmptyArchive: true
                     }
                 }
             }
@@ -155,20 +148,19 @@ pipeline {
             }
             steps {
                 echo "🚀 Préparation pour déploiement…"
-                dir('student-management-code') { // <--- Nécessaire pour accéder à target/
-                    script {
-                        echo "✅ Build prêt pour déploiement."
-                        bat """
-                            if exist "target\\*.jar" (
-                                echo "Artefact trouvé :"
-                                dir target
-                                for %%i in (target\\*.jar) do (
-                                    echo Copie de %%i...
-                                    copy "%%i" "C:\\Builds\\student-management-${BUILD_ID}.jar"
-                                )
+                // CORRECTION CLÉ : Suppression du 'dir'
+                script {
+                    echo "✅ Build prêt pour déploiement."
+                    bat """
+                        if exist "target\\*.jar" (
+                            echo "Artefact trouvé :"
+                            dir target
+                            for %%i in (target\\*.jar) do (
+                                echo Copie de %%i...
+                                copy "%%i" "C:\\Builds\\student-management-${BUILD_ID}.jar"
                             )
-                        """
-                    }
+                        )
+                    """
                 }
             }
         }
@@ -178,7 +170,7 @@ pipeline {
     post {
         always {
             echo "📋 Nettoyage et rapports…"
-            // Nettoyage (la commande cleanWs() a déjà été faite, ici c'est pour l'affichage)
+            // Ce BAT s'exécute à la racine du workspace
             bat """
                 if exist "target\\*.jar" (
                     echo "✅ Build terminé avec artefact"
@@ -187,25 +179,24 @@ pipeline {
                 )
             """
             
-            // Les chemins doivent refléter la structure après le 'dir'
-            dir('student-management-code') { 
-                // Publier les résultats des tests JUnit
-                junit 'target/surefire-reports/**/*.xml'
-                
-                // Publier les rapports JaCoCo
-                jacoco(
-                    execPattern: 'target/jacoco.exec',
-                    classPattern: 'target/classes',
-                    sourcePattern: 'src/main/java',
-                    inclusionPattern: '**/*.class',
-                    changeBuildStatus: false
-                )
-            }
+            // CORRECTION CLÉ : Suppression du 'dir'
+            // Les chemins ciblent directement les fichiers depuis la racine du workspace
+            
+            // Publier les résultats des tests JUnit
+            junit 'target/surefire-reports/**/*.xml'
+            
+            // Publier les rapports JaCoCo
+            jacoco(
+                execPattern: 'target/jacoco.exec',
+                classPattern: 'target/classes',
+                sourcePattern: 'src/main/java',
+                inclusionPattern: '**/*.class',
+                changeBuildStatus: false
+            )
         }
         
         success {
             echo "🎉 SUCCESS : Pipeline terminé avec succès !"
-            echo "📦 L'artefact JAR est prêt pour déploiement."
         }
         
         failure {
