@@ -7,7 +7,7 @@ pipeline {
         stage('📥 Git Clone') {
             steps {
                 git branch: 'main',
-                    url: 'https://github.com/chahinesaadellaoui/ProjetDevops.git'
+                    url: 'https://github.com/hassenjridi12/Mangement-student.git'
             }
         }
 
