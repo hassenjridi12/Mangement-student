@@ -1,6 +1,12 @@
 pipeline {
     agent any
 
+    environment {
+        // Remplacez par votre identifiant Docker Hub
+        DOCKER_USER = 'hassenjridi12'
+        IMAGE_NAME  = 'management-student'
+    }
+
     stages {
         stage('📥 Git Clone') {
             steps {
@@ -9,28 +15,19 @@ pipeline {
             }
         }
 
-        stage('🏗️ Build') {
-            steps {
-                echo "Compilation du projet..."
-                // Utilisation de 'bat' au lieu de 'sh' pour Windows
-                bat 'mvn clean compile -DskipTests'
-            }
-        }
-
-        stage('📦 Create JAR') {
-            steps {
-                echo "Packaging du projet..."
-                bat 'mvn package -DskipTests' 
-                bat 'dir target\\*.jar' // 'dir' est l'équivalent de 'ls' sur Windows
-            }
-        }
-
-        stage('SonarQube Analysis') {
+        stage('🐳 Docker Build & Push') {
             steps {
                 script {
-                    withSonarQubeEnv('devops') {
-                        bat 'mvn clean verify sonar:sonar -DskipTests'
-                    }
+                    echo "Construction de l'image Docker..."
+                    // Construction de l'image
+                    bat "docker build -t ${DOCKER_USER}/${IMAGE_NAME}:latest ."
+                    
+                    echo "Connexion à Docker Hub..."
+                    // Note: Il est préférable d'utiliser des credentials Jenkins pour le login
+                    // bat "docker login -u user -p password" 
+                    
+                    echo "Push de l'image..."
+                    bat "docker push ${DOCKER_USER}/${IMAGE_NAME}:latest"
                 }
             }
         }
