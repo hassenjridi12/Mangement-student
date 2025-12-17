@@ -12,15 +12,16 @@ pipeline {
         stage('🏗️ Build') {
             steps {
                 echo "Compilation du projet..."
-                sh 'mvn clean compile -DskipTests'
+                // Utilisation de 'bat' au lieu de 'sh' pour Windows
+                bat 'mvn clean compile -DskipTests'
             }
         }
 
         stage('📦 Create JAR') {
             steps {
                 echo "Packaging du projet..."
-                sh 'mvn package -DskipTests' 
-                sh 'ls -la target/*.jar'
+                bat 'mvn package -DskipTests' 
+                bat 'dir target\\*.jar' // 'dir' est l'équivalent de 'ls' sur Windows
             }
         }
 
@@ -28,10 +29,10 @@ pipeline {
             steps {
                 script {
                     withSonarQubeEnv('devops') {
-                        sh 'mvn clean verify sonar:sonar -DskipTests'
+                        bat 'mvn clean verify sonar:sonar -DskipTests'
                     }
                 }
             }
         }
-    } // Fin de stages
-} // Fin de pipeline
+    }
+}
