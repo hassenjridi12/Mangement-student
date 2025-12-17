@@ -2,8 +2,8 @@ pipeline {
     agent any
 
     tools {
-        maven 'Maven-3.9.11'      // Nom EXACT dans Jenkins
-        jdk 'JAVA_HOME'      // Nom EXACT dans Jenkins
+        maven 'Maven-3.9.11'
+        jdk 'JAVA_HOME'
     }
 
     stages {
@@ -21,7 +21,6 @@ pipeline {
             steps {
                 echo '🔨 Compilation du projet avec Maven...'
                 bat 'mvn clean compile -DskipTests'
-                echo '✅ Build terminé'
             }
         }
 
@@ -29,34 +28,41 @@ pipeline {
             steps {
                 echo '📦 Packaging du projet...'
                 bat 'mvn package -DskipTests'
-                echo '✅ Packaging terminé'
             }
         }
 
-        stage('5️⃣ Package JAR') {
+        stage('4️⃣ Archive Artifact') {
             steps {
-                echo '📦 Packaging final en JAR...'
-                bat 'mvn clean package -DskipTests'
-                echo '✅ JAR prêt'
-            }
-        }
-
-        stage('6️⃣ Archive Artifact') {
-            steps {
-                echo '📁 Archivage du fichier JAR...'
+                echo '📁 Archivage du JAR...'
                 archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
             }
         }
 
-        stage('7️⃣ Build Docker Image') {
+        stage('5️⃣ Build Docker Image (OPTIONNEL)') {
             steps {
-                echo '🐳 Construction de l’image Docker...'
-                bat 'docker build -t student-management:1.0 .'
-                echo '✅ Image Docker créée'
+                script {
+                    echo '🐳 Vérification Docker...'
+                    def dockerOk = bat(
+                        script: 'docker version',
+                        returnStatus: true
+                    )
+
+                    if (dockerOk == 0) {
+                        echo '✅ Docker disponible'
+                        bat 'docker build -t student-management:1.0 .'
+                    } else {
+                        echo '⚠️ Docker indisponible – étape ignorée'
+                    }
+                }
             }
         }
 
-        stage('Push Docker Image') {
+        stage('6️⃣ Push Docker Image (OPTIONNEL)') {
+            when {
+                expression {
+                    bat(script: 'docker version', returnStatus: true) == 0
+                }
+            }
             steps {
                 script {
                     withCredentials([usernamePassword(
