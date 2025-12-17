@@ -2,7 +2,6 @@ pipeline {
     agent any
 
     environment {
-        // Remplacez par votre identifiant Docker Hub
         DOCKER_USER = 'hassenjridi12'
         IMAGE_NAME  = 'management-student'
     }
@@ -18,15 +17,14 @@ pipeline {
         stage('🐳 Docker Build & Push') {
             steps {
                 script {
+                    // Test si Docker répond bien
+                    bat 'docker version'
+                    
                     echo "Construction de l'image Docker..."
-                    // Construction de l'image
                     bat "docker build -t ${DOCKER_USER}/${IMAGE_NAME}:latest ."
                     
-                    echo "Connexion à Docker Hub..."
-                    // Note: Il est préférable d'utiliser des credentials Jenkins pour le login
-                    // bat "docker login -u user -p password" 
-                    
                     echo "Push de l'image..."
+                    // Note: Assurez-vous d'être déjà connecté via 'docker login' sur la machine
                     bat "docker push ${DOCKER_USER}/${IMAGE_NAME}:latest"
                 }
             }
