@@ -12,7 +12,7 @@ pipeline {
             steps {
                 echo '📥 Clonage du repository Git...'
                 git branch: 'main',
-                    url: 'https://github.com/bahijabaj123/student-management2.git'
+                    url: 'https://github.com/hassenjridi12/Mangement-student.git'
                 echo '✅ Clonage terminé'
             }
         }
