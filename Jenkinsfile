@@ -1,12 +1,8 @@
 pipeline {
     agent any
 
-    environment {
-        DOCKER_USER = 'hassenjridi12'
-        IMAGE_NAME  = 'management-student'
-    }
-
     stages {
+
         stage('📥 Git Clone') {
             steps {
                 git branch: 'main',
@@ -14,20 +10,37 @@ pipeline {
             }
         }
 
-        stage('🐳 Docker Build & Push') {
+        stage('🏗️ Build') { 
             steps {
-                script {
-                    // Test si Docker répond bien
-                    bat 'docker version'
-                    
-                    echo "Construction de l'image Docker..."
-                    bat "docker build -t ${DOCKER_USER}/${IMAGE_NAME}:latest ."
-                    
-                    echo "Push de l'image..."
-                    // Note: Assurez-vous d'être déjà connecté via 'docker login' sur la machine
-                    bat "docker push ${DOCKER_USER}/${IMAGE_NAME}:latest"
-                }
+                echo "Compilation du projet..."
+                sh 'mvn clean compile -DskipTests'
             }
+        }
+
+        stage('📦 Create JAR') {
+            steps {
+                echo "Packaging du projet..."
+                sh 'mvn package -DskipTests' 
+                sh 'ls -la target/*.jar'
+            }
+        }
+        stage('SonarQube Analysis') {
+    steps {
+        withSonarQubeEnv(installationName: 'devops') {
+            sh 'mvn clean verify sonar:sonar -DskipTests'
+        }
+    }
+}
+
+    }
+
+    post {
+        success {
+            echo '🎉 Pipeline exécuté avec succès !'
+            archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
+        }
+        failure {
+            echo '❌ Échec du pipeline.'
         }
     }
 }
