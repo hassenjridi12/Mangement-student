@@ -1,9 +1,7 @@
-
 pipeline {
     agent any
 
     stages {
-
         stage('📥 Git Clone') {
             steps {
                 git branch: 'main',
@@ -25,23 +23,15 @@ pipeline {
                 sh 'ls -la target/*.jar'
             }
         }
+
         stage('SonarQube Analysis') {
-    steps {
-        withSonarQubeEnv(installationName: 'devops') {
-            sh 'mvn clean verify sonar:sonar -DskipTests'
+            steps {
+                script {
+                    withSonarQubeEnv('devops') {
+                        sh 'mvn clean verify sonar:sonar -DskipTests'
+                    }
+                }
+            }
         }
-    }
-}
-
-    }
-
-    post {
-        success {
-            echo '🎉 Pipeline exécuté avec succès !'
-            archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
-        }
-        failure {
-            echo '❌ Échec du pipeline.'
-        }
-    }
-}
+    } // Fin de stages
+} // Fin de pipeline
