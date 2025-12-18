@@ -1,79 +1,83 @@
 pipeline {
+
     agent any
 
     tools {
-        maven 'Maven-3.9.11'
-        jdk 'JAVA_HOME'
+        maven 'Maven-3.9.11'     // Nom EXACT dans Jenkins
+        jdk 'JAVA_HOME'          // Nom EXACT dans Jenkins
+    }
+
+    environment {
+        APP_NAME = 'student-management'
+        IMAGE_TAG = '1.0'
     }
 
     stages {
 
-        stage('1️⃣ Clone Repository') {
+        stage('1️⃣ Checkout Source Code') {
             steps {
-                echo '📥 Clonage du repository Git...'
+                echo '📥 Clonage du dépôt Git...'
                 git branch: 'main',
-                    url: 'https://github.com/hassenjridi12/Mangement-student.git'
-                echo '✅ Clonage terminé'
+                    url: 'https://github.com/TON_USER_GITHUB/student-management.git'
             }
         }
 
-        stage('2️⃣ Build Project') {
+        stage('2️⃣ Clean Project') {
             steps {
-                echo '🔨 Compilation du projet avec Maven...'
-                bat 'mvn clean compile -DskipTests'
+                echo '🧹 Nettoyage du projet...'
+                sh 'mvn clean'
             }
         }
 
-        stage('3️⃣ Package Project') {
+        stage('3️⃣ Compile Project') {
             steps {
-                echo '📦 Packaging du projet...'
-                bat 'mvn package -DskipTests'
+                echo '⚙️ Compilation du projet...'
+                sh 'mvn compile'
             }
         }
 
-        stage('4️⃣ Archive Artifact') {
+        stage('4️⃣ Run Tests (Skipped)') {
+            steps {
+                echo '⏭️ Tests ignorés'
+            }
+        }
+
+        stage('5️⃣ Package JAR') {
+            steps {
+                echo '📦 Packaging du JAR...'
+                sh 'mvn package -DskipTests'
+            }
+        }
+
+        stage('6️⃣ Archive Artifact') {
             steps {
                 echo '📁 Archivage du JAR...'
                 archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
             }
         }
 
-        stage('5️⃣ Build Docker Image (OPTIONNEL)') {
+        stage('7️⃣ Build Docker Image') {
             steps {
-                script {
-                    echo '🐳 Vérification Docker...'
-                    def dockerOk = bat(
-                        script: 'docker version',
-                        returnStatus: true
-                    )
-
-                    if (dockerOk == 0) {
-                        echo '✅ Docker disponible'
-                        bat 'docker build -t student-management:1.0 .'
-                    } else {
-                        echo '⚠️ Docker indisponible – étape ignorée'
-                    }
-                }
+                echo '🐳 Construction de l’image Docker...'
+                sh '''
+                    docker build -t ${APP_NAME}:${IMAGE_TAG} .
+                '''
             }
         }
 
-        stage('6️⃣ Push Docker Image (OPTIONNEL)') {
-            when {
-                expression {
-                    bat(script: 'docker version', returnStatus: true) == 0
-                }
-            }
+        stage('8️⃣ Push Docker Image to DockerHub') {
             steps {
+                echo '🚀 Push vers Docker Hub...'
                 script {
                     withCredentials([usernamePassword(
                         credentialsId: 'dockerhub-credentials',
                         usernameVariable: 'DOCKERHUB_USER',
                         passwordVariable: 'DOCKERHUB_PASS'
                     )]) {
-                        bat '''
-                        echo %DOCKERHUB_PASS% | docker login -u %DOCKERHUB_USER% --password-stdin
-                        docker tag student-management:1.0 %DOCKERHUB_USER%/student-management:1.0
-                        docker push %DOCKERHUB_USER%/student-management:1.0
+                        sh '''
+                            echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USER" --password-stdin
+                            docker tag ${APP_NAME}:${IMAGE_TAG} $DOCKERHUB_USER/${APP_NAME}:${IMAGE_TAG}
+                            docker push $DOCKERHUB_USER/${APP_NAME}:${IMAGE_TAG}
                         '''
                     }
                 }
@@ -83,10 +87,13 @@ pipeline {
 
     post {
         success {
-            echo '🎉 Pipeline terminé avec succès'
+            echo '✅ Pipeline terminé avec succès 🎉'
         }
         failure {
-            echo '❌ Le pipeline a échoué'
+            echo '❌ Pipeline échoué'
+        }
+        always {
+            echo '📌 Fin du pipeline'
         }
     }
 }
