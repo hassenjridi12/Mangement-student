@@ -3,8 +3,8 @@ pipeline {
     agent any
 
     tools {
-        maven 'Maven-3.9.11'     // Nom EXACT dans Jenkins
-        jdk 'JAVA_HOME'          // Nom EXACT dans Jenkins
+        maven 'Maven-3.9.11'
+        jdk 'JAVA_HOME'
     }
 
     environment {
@@ -25,47 +25,39 @@ pipeline {
         stage('2️⃣ Clean Project') {
             steps {
                 echo '🧹 Nettoyage du projet...'
-                sh 'mvn clean'
+                bat 'mvn clean'
             }
         }
 
         stage('3️⃣ Compile Project') {
             steps {
                 echo '⚙️ Compilation du projet...'
-                sh 'mvn compile'
+                bat 'mvn compile'
             }
         }
 
-        stage('4️⃣ Run Tests (Skipped)') {
-            steps {
-                echo '⏭️ Tests ignorés'
-            }
-        }
-
-        stage('5️⃣ Package JAR') {
+        stage('4️⃣ Package JAR') {
             steps {
                 echo '📦 Packaging du JAR...'
-                sh 'mvn package -DskipTests'
+                bat 'mvn package -DskipTests'
             }
         }
 
-        stage('6️⃣ Archive Artifact') {
+        stage('5️⃣ Archive Artifact') {
             steps {
                 echo '📁 Archivage du JAR...'
-                archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
+                archiveArtifacts artifacts: 'target\\*.jar', fingerprint: true
             }
         }
 
-        stage('7️⃣ Build Docker Image') {
+        stage('6️⃣ Build Docker Image') {
             steps {
                 echo '🐳 Construction de l’image Docker...'
-                sh '''
-                    docker build -t ${APP_NAME}:${IMAGE_TAG} .
-                '''
+                bat 'docker build -t %APP_NAME%:%IMAGE_TAG% .'
             }
         }
 
-        stage('8️⃣ Push Docker Image to DockerHub') {
+        stage('7️⃣ Push Docker Image to DockerHub') {
             steps {
                 echo '🚀 Push vers Docker Hub...'
                 script {
@@ -74,10 +66,10 @@ pipeline {
                         usernameVariable: 'DOCKERHUB_USER',
                         passwordVariable: 'DOCKERHUB_PASS'
                     )]) {
-                        sh '''
-                            echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USER" --password-stdin
-                            docker tag ${APP_NAME}:${IMAGE_TAG} $DOCKERHUB_USER/${APP_NAME}:${IMAGE_TAG}
-                            docker push $DOCKERHUB_USER/${APP_NAME}:${IMAGE_TAG}
+                        bat '''
+                        docker login -u %DOCKERHUB_USER% -p %DOCKERHUB_PASS%
+                        docker tag %APP_NAME%:%IMAGE_TAG% %DOCKERHUB_USER%/%APP_NAME%:%IMAGE_TAG%
+                        docker push %DOCKERHUB_USER%/%APP_NAME%:%IMAGE_TAG%
                         '''
                     }
                 }
@@ -91,9 +83,6 @@ pipeline {
         }
         failure {
             echo '❌ Pipeline échoué'
-        }
-        always {
-            echo '📌 Fin du pipeline'
         }
     }
 }
